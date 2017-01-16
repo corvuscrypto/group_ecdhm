@@ -15,3 +15,21 @@ For now, I will NOT include the setting up of TLS for intercommunication.
 Perhaps later, but for now I'm just playing with key exchange protocols.
 
 Cheers :)
+
+## Protocol
+The connection is pretty simple and occurs between clients and a server
+
+1. Connection request from client which can include out of band credentials or not (this is more for a future project
+  and if you do send credentials, ensure you already have TLS for this exchange)
+
+2. Connection acceptance or rejection from server.
+
+3. * If rejected: end of communication
+   * If accepted: client sends public signing key request along with client public key
+4. Server responds with its own public key for signing and point-wise multiplies
+  its own private key with the Client public key.
+
+5. Client receives server public key and point-wise multiplies its own private key
+  with the Server public key.
+
+6. Both clients now have equal shared-secret signing keys.

@@ -1,12 +1,16 @@
 package server
 
-import "net"
+import (
+	"net"
+
+	"github.com/corvuscrypto/group_ecdhm"
+)
 
 //Client representation for the server to manage
 type Client struct {
 	Name       string
 	Connection *net.TCPConn
-	verified   bool
+	sharedKey  gecdhm.Point
 }
 
 //This will hold our clients

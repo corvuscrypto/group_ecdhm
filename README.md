@@ -29,9 +29,7 @@ actually be useful, but who knows, maybe it will help you with something.
 ## Protocol
 The connection is pretty simple and occurs between clients and a server
 
-1. Connection request from client which can include out of band credentials or not
-(this is more for a future project and if you do send credentials, ensure you
-  already have TLS for this exchange)
+1. Connection request from client
 
 2. Connection acceptance or rejection from server.
 

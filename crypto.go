@@ -2,7 +2,16 @@ package gecdhm
 
 import (
 	"crypto/elliptic"
+	"encoding/binary"
+	"errors"
+	"fmt"
 	"math/big"
+)
+
+//Package errors related to handling of data
+var (
+	ErrMarshal   = errors.New("Unexpected error during data marshalling")
+	ErrUnmarshal = errors.New("Unexpected error during data unmarshalling")
 )
 
 //Point is the representation of the x, y params created by point multiplication
@@ -23,6 +32,64 @@ func NewPoint(x, y *big.Int) Point {
 //IsEqual checks if two points are equal
 func (p Point) IsEqual(q Point) bool {
 	return p.x.Cmp(q.x) == 0 && p.y.Cmp(q.y) == 0
+}
+
+//Marshal transforms a Point into binary data
+func (p Point) Marshal() (data []byte) {
+	lengthBytesBuffer := make([]byte, 10)
+	xBytes := p.x.Bytes()
+	xByteLength := int64(len(xBytes))
+	if p.x.Sign() == -1 {
+		xByteLength = -xByteLength
+		fmt.Println("xlenght", xByteLength)
+	}
+	n := binary.PutVarint(lengthBytesBuffer, xByteLength)
+	data = append(data, lengthBytesBuffer[:n]...) //length
+	data = append(data, xBytes...)
+
+	yBytes := p.y.Bytes()
+	yByteLength := int64(len(yBytes))
+	if p.y.Sign() == -1 {
+		yByteLength = -yByteLength
+	}
+	binary.PutVarint(lengthBytesBuffer, yByteLength)
+	data = append(data, lengthBytesBuffer[:n]...)
+	data = append(data, yBytes...)
+	return
+}
+
+//Unmarshal transforms binary data into a Point
+func (p *Point) Unmarshal(data []byte) (err error) {
+	var i = int64(0)
+	xByteLength, n := binary.Varint(data)
+	xNegative := false
+	if xByteLength < 0 {
+		xByteLength = -xByteLength
+		xNegative = true
+	}
+	i += int64(n)
+	p.x = new(big.Int).SetBytes(data[i : i+xByteLength])
+	if xNegative {
+		p.x.Neg(p.x)
+	}
+	i += xByteLength
+	yByteLength, n := binary.Varint(data[i:])
+	yNegative := false
+	if yByteLength < 0 {
+		yByteLength = -yByteLength
+		yNegative = true
+	}
+	i += int64(n)
+	p.y = new(big.Int).SetBytes(data[i : i+yByteLength])
+	if yNegative {
+		p.y.Neg(p.y)
+	}
+	if recover() != nil {
+		err = ErrUnmarshal
+		p.x = nil
+		p.y = nil
+	}
+	return
 }
 
 //PrivateKey is the gecdhm representation of curve parameters specific to one party
